@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DataLens | Dataset Readiness Checker</title>
+
+    <meta name="description"
+          content="Analyze dataset quality and identify potential machine learning readiness issues before training.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+    <div class="container navbar">
+
+        <a href="/" class="brand">
+            <div class="brand-logo">D</div>
+            <div>
+                <div class="brand-name">DataLens<span>.</span></div>
+                <span class="brand-caption">DATASET INTELLIGENCE</span>
+            </div>
+        </a>
+
+        <nav class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#how-it-works" class="nav-link">How It Works</a>
+        </nav>
+
+        <div class="nav-actions">
+            <a href="#upload" class="btn btn-primary">
+                Analyze Dataset &rarr;
+            </a>
+        </div>
+
+    </div>
+</header>
+
+
+<main>
+
+    <!-- Hero Section -->
+
+    <section class="container page">
+
+        <div class="page-heading">
+            <div>
+                <div class="eyebrow">
+                    <span class="eyebrow-dot"></span>
+                    MACHINE LEARNING TOOLKIT
+                </div>
+
+                <h1>
+                    Know Your Data<br>
+                    Before You Train.
+                </h1>
+
+                <p>
+                    Discover hidden data quality issues, identify potential
+                    risks, and understand whether your dataset is ready
+                    for machine learning.
+                </p>
+            </div>
+        </div>
+
+
+        <!-- Error Message -->
+
+        {% if error %}
+        <div class="alert alert-danger">
+            <div>
+                <div class="alert-title">Upload Error</div>
+                <p class="alert-message">{{ error }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+
+        <!-- Upload Section -->
+
+        <section class="card upload-section" id="upload">
+
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Analyze Your Dataset</h2>
+                    <p class="card-description">
+                        Upload a CSV file to begin your dataset assessment.
+                    </p>
+                </div>
+
+                <span class="badge badge-info">CSV FORMAT</span>
+            </div>
+
+
+            <div class="card-body">
+
+                <form
+                    action="{{ url_for('analyze') }}"
+                    method="POST"
+                    enctype="multipart/form-data"
+                    id="upload-form"
+                >
+
+                    <label for="dataset-file" class="upload-box" id="drop-zone">
+
+                        <div class="upload-icon">↑</div>
+
+                        <h3 class="upload-title">
+                            Drop your dataset here
+                        </h3>
+
+                        <p class="upload-description" id="file-description">
+                            Choose a CSV file from your computer.
+                            Your dataset will be analyzed for common
+                            quality issues.
+                        </p>
+
+                        <span class="btn btn-secondary">
+                            Browse Files
+                        </span>
+
+                        <input
+                            type="file"
+                            name="file"
+                            id="dataset-file"
+                            class="upload-input"
+                            accept=".csv,text/csv"
+                            required
+                        >
+
+                        <div class="upload-formats">
+                            CSV files only &bull; Maximum size: 10 MB
+                        </div>
+
+                    </label>
+
+
+                    <div class="target-picker mt-24">
+                        <label for="target-select" class="target-label">
+                            Target column (optional)
+                        </label>
+                        <select name="target" id="target-select" class="target-select" disabled>
+                            <option value="">Choose a file first</option>
+                        </select>
+                        <p class="form-hint">
+                            The column you want to predict. Enables class balance and leakage checks.
+                        </p>
+                    </div>
+
+                    <div class="flex justify-between items-center gap-12 mt-24"
+                         style="flex-wrap: wrap;">
+
+                        <p class="form-hint">
+                            Avoid uploading sensitive personal information.
+                        </p>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            id="analyze-button"
+                        >
+                            Analyze Dataset &rarr;
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </section>
+
+
+        <!-- Features -->
+
+        <section id="features">
+
+            <div class="page-heading">
+                <div>
+                    <div class="eyebrow">WHAT DATALENS CHECKS</div>
+
+                    <h2>Understand Your Dataset</h2>
+
+                    <p>
+                        Identify potential problems before they affect
+                        your machine learning workflow.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="dashboard-grid-3">
+
+                <article class="card card-body">
+                    <div class="metric-icon">01</div>
+
+                    <h3 style="margin-top: 18px;">
+                        Data Quality
+                    </h3>
+
+                    <p class="card-description">
+                        Detect missing values, duplicate records,
+                        constant columns, and suspicious data types.
+                    </p>
+                </article>
+
+
+                <article class="card card-body">
+                    <div class="metric-icon">02</div>
+
+                    <h3 style="margin-top: 18px;">
+                        ML Readiness
+                    </h3>
+
+                    <p class="card-description">
+                        Evaluate target distributions, feature
+                        characteristics, and potential leakage risks.
+                    </p>
+                </article>
+
+
+                <article class="card card-body">
+                    <div class="metric-icon">03</div>
+
+                    <h3 style="margin-top: 18px;">
+                        Actionable Insights
+                    </h3>
+
+                    <p class="card-description">
+                        Get a readiness score and prioritized
+                        recommendations for improving your data.
+                    </p>
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- How It Works -->
+
+        <section id="how-it-works" style="margin-top: 65px;">
+
+            <div class="page-heading">
+                <div>
+                    <div class="eyebrow">SIMPLE WORKFLOW</div>
+
+                    <h2>How It Works</h2>
+
+                    <p>
+                        Three simple steps to understand your dataset.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="dashboard-grid-3">
+
+                <article class="card card-body">
+                    <span class="badge badge-info">STEP 01</span>
+
+                    <h3 style="margin-top: 18px;">
+                        Upload
+                    </h3>
+
+                    <p class="card-description">
+                        Select a CSV dataset from your computer.
+                    </p>
+                </article>
+
+
+                <article class="card card-body">
+                    <span class="badge badge-info">STEP 02</span>
+
+                    <h3 style="margin-top: 18px;">
+                        Analyze
+                    </h3>
+
+                    <p class="card-description">
+                        DataLens examines data quality and
+                        highlights potential problems.
+                    </p>
+                </article>
+
+
+                <article class="card card-body">
+                    <span class="badge badge-info">STEP 03</span>
+
+                    <h3 style="margin-top: 18px;">
+                        Improve
+                    </h3>
+
+                    <p class="card-description">
+                        Review the findings and decide what
+                        needs to be fixed before training.
+                    </p>
+                </article>
+
+            </div>
+
+        </section>
+
+    </section>
+
+</main>
+
+
+<footer class="footer">
+    <div class="container footer-content">
+
+        <p class="footer-text">
+            &copy; 2026 DataLens. Dataset Readiness Checker for ML.
+        </p>
+
+        <p class="footer-text">
+            Built with Python, Flask, Pandas, and scikit-learn.
+        </p>
+
+    </div>
+</footer>
+
+
+<script>
+    const fileInput = document.getElementById("dataset-file");
+    const dropZone = document.getElementById("drop-zone");
+    const fileDescription = document.getElementById("file-description");
+    const uploadForm = document.getElementById("upload-form");
+    const analyzeButton = document.getElementById("analyze-button");
+
+    const MAX_SIZE = 10 * 1024 * 1024;
+
+    fileInput.addEventListener("change", function () {
+        const file = this.files[0];
+
+        if (!file) {
+            fileDescription.textContent =
+                "Choose a CSV file from your computer.";
+            return;
+        }
+
+        fileDescription.textContent =
+            file.name + " (" + (file.size / (1024 * 1024)).toFixed(2)
+            + " MB)";
+
+        if (!file.name.toLowerCase().endsWith(".csv")) {
+            alert("Please select a CSV file.");
+            this.value = "";
+            fileDescription.textContent = "Choose a CSV file from your computer.";
+            return;
+        }
+
+        if (file.size > MAX_SIZE) {
+            alert("The maximum file size is 10 MB.");
+            this.value = "";
+            fileDescription.textContent = "Choose a CSV file from your computer.";
+        }
+    });
+
+
+    ["dragenter", "dragover"].forEach(function (eventName) {
+        dropZone.addEventListener(eventName, function (event) {
+            event.preventDefault();
+            dropZone.classList.add("dragover");
+        });
+    });
+
+
+    ["dragleave", "drop"].forEach(function (eventName) {
+        dropZone.addEventListener(eventName, function (event) {
+            event.preventDefault();
+            dropZone.classList.remove("dragover");
+        });
+    });
+
+
+    dropZone.addEventListener("drop", function (event) {
+        const files = event.dataTransfer.files;
+
+        if (files.length > 0) {
+            const file = files[0];
+
+            if (!file.name.toLowerCase().endsWith(".csv")) {
+                alert("Please drop a CSV file.");
+                return;
+            }
+
+            if (file.size > MAX_SIZE) {
+                alert("The maximum file size is 10 MB.");
+                return;
+            }
+
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            fileInput.files = transfer.files;
+
+            fileDescription.textContent =
+                file.name + " (" + (file.size / (1024 * 1024)).toFixed(2)
+                + " MB)";
+        }
+    });
+
+
+    uploadForm.addEventListener("submit", function (event) {
+        const file = fileInput.files[0];
+
+        if (!file) {
+            event.preventDefault();
+            alert("Please select a CSV file.");
+            return;
+        }
+
+        if (
+            !file.name.toLowerCase().endsWith(".csv") ||
+            file.size > MAX_SIZE
+        ) {
+            event.preventDefault();
+            alert("Please select a valid CSV file smaller than 10 MB.");
+            return;
+        }
+
+        analyzeButton.disabled = true;
+        analyzeButton.textContent = "Analyzing Dataset...";
+    });
+
+    // Populate the target dropdown from the CSV header (read locally in the browser).
+    const targetSelect = document.getElementById("target-select");
+
+    function parseHeader(line) {
+        const cols = [];
+        let cur = "", inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+                else { inQuotes = !inQuotes; }
+            } else if (ch === "," && !inQuotes) {
+                cols.push(cur); cur = "";
+            } else {
+                cur += ch;
+            }
+        }
+        cols.push(cur);
+        return cols.map(c => c.trim()).filter(c => c.length > 0);
+    }
+
+    fileInput.addEventListener("change", async function () {
+        const file = this.files[0];
+        targetSelect.innerHTML = "";
+
+        if (!file) {
+            targetSelect.disabled = true;
+            targetSelect.add(new Option("Choose a file first", ""));
+            return;
+        }
+
+        try {
+            const head = await file.slice(0, 65536).text();
+            const firstLine = head.replace(/^\uFEFF/, "").split(/\r?\n/)[0];
+            const columns = parseHeader(firstLine);
+
+            targetSelect.add(new Option("None (skip target checks)", ""));
+            columns.forEach(c => targetSelect.add(new Option(c, c)));
+            targetSelect.disabled = false;
+        } catch (err) {
+            targetSelect.add(new Option("None (skip target checks)", ""));
+            targetSelect.disabled = true;
+        }
+    });
+</script>
+
+</body>
+</html>
+

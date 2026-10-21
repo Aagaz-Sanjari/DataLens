@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1120">
+    <meta name="description" content="DataLens dataset quality and machine learning readiness dashboard.">
+    <title>Analysis Dashboard | DataLens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="dashboard-page">
+
+<header class="app-header">
+    <div class="app-header-inner">
+        <a class="brand" href="{{ url_for('index') }}">
+            <span class="brand-logo">D</span>
+            <span class="brand-copy">
+                <span class="brand-name">DataLens</span>
+                <span class="brand-caption">DATA INTELLIGENCE</span>
+            </span>
+        </a>
+
+```
+    <div class="header-right">
+        <span class="system-status">
+            <span class="status-dot"></span>
+            Analysis complete
+        </span>
+        <a href="{{ url_for('index') }}" class="btn btn-outline">New analysis <span aria-hidden="true">↗</span></a>
+    </div>
+</div>
+```
+
+</header>
+
+<main class="dashboard-main">
+
+```
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow"><span class="eyebrow-dot"></span> DATASET INTELLIGENCE</div>
+        <h1>Your dataset, <span class="heading-accent">decoded.</span></h1>
+        <p class="dashboard-subtitle">
+            Review data quality, identify potential ML risks, and discover what to fix before training.
+        </p>
+    </div>
+
+    <div class="dataset-chip">
+        <span class="file-chip-icon">CSV</span>
+        <span class="dataset-chip-copy">
+            <strong>{{ filename }}</strong>
+            <small>Analyzed dataset</small>
+        </span>
+    </div>
+</section>
+
+{% if readiness %}
+<section class="readiness-panel">
+    <div class="readiness-main">
+        <div class="section-label">OVERALL READINESS</div>
+
+        <div class="score-display">
+            <div class="score-number">{{ readiness.score }}<span>/100</span></div>
+            <span class="score-grade">{{ readiness.grade }}</span>
+        </div>
+
+        <p class="readiness-description">
+            Your score summarizes the issues detected by DataLens rules.
+            Review the findings below before using this dataset for machine learning.
+        </p>
+
+        {% if readiness.fix_first %}
+        <div class="quick-fix">
+            <span class="quick-fix-icon">✦</span>
+            <span><strong>Recommended next step:</strong>
+                {{ readiness.fix_first[0].message }}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="score-visual">
+        <div class="score-ring"
+             style="--score-angle: {{ readiness.score * 3.6 }}deg;"
+             role="img"
+             aria-label="Readiness score: {{ readiness.score }} out of 100">
+            <div class="score-ring-inner">
+                <span class="ring-label">READINESS</span>
+                <strong>{{ readiness.score }}<small>%</small></strong>
+                <span class="ring-caption">Rule-based score</span>
+            </div>
+        </div>
+        <span class="score-footnote">Indicative assessment</span>
+    </div>
+</section>
+{% endif %}
+
+<section class="metrics-section">
+    <div class="section-heading">
+        <div>
+            <h2>Dataset overview</h2>
+            <p>A quick look at your data structure and quality.</p>
+        </div>
+        <span class="section-index">01 / OVERVIEW</span>
+    </div>
+
+    <div class="metrics-grid">
+        <article class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Total rows</span>
+                <span class="metric-symbol">▤</span>
+            </div>
+            <div class="metric-value">{{ quality.rows }}</div>
+            <div class="metric-note">Records in dataset</div>
+        </article>
+
+        <article class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Total columns</span>
+                <span class="metric-symbol">▥</span>
+            </div>
+            <div class="metric-value">{{ quality.columns }}</div>
+            <div class="metric-note">Available variables</div>
+        </article>
+
+        <article class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Duplicate rows</span>
+                <span class="metric-symbol">⧉</span>
+            </div>
+            <div class="metric-value">{{ quality.duplicate_rows }}</div>
+            <div class="metric-note">Repeated records detected</div>
+        </article>
+
+        <article class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Missing values</span>
+                <span class="metric-symbol">◌</span>
+            </div>
+            <div class="metric-value">
+                {% set missing_total = quality.missing_values.values() | sum %}
+                {{ missing_total }}
+            </div>
+            <div class="metric-note">Empty cells detected</div>
+        </article>
+    </div>
+</section>
+
+{% if readiness and readiness.fix_first %}
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>What needs attention?</h2>
+            <p>Prioritized recommendations based on the checks performed.</p>
+        </div>
+        <span class="section-index">02 / ACTION PLAN</span>
+    </div>
+
+    <div class="recommendation-list">
+        {% for item in readiness.fix_first %}
+        <article class="recommendation-card">
+            <span class="recommendation-number">{{ "%02d" | format(loop.index) }}</span>
+            <div class="recommendation-copy">
+                <strong>{{ item.message }}</strong>
+                {% if item.category %}
+                <span class="recommendation-category">{{ item.category }}</span>
+                {% endif %}
+            </div>
+            <span class="recommendation-arrow" aria-hidden="true">↗</span>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if readiness and readiness.deductions %}
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>Score breakdown</h2>
+            <p>Understand which checks contributed to your readiness score.</p>
+        </div>
+        <span class="section-index">03 / SCORING</span>
+    </div>
+
+    <div class="panel">
+        {% for item in readiness.deductions %}
+        <div class="breakdown-row">
+            <div class="breakdown-copy">
+                <strong>{{ item.category }}</strong>
+                <span>{{ item.message }}</span>
+            </div>
+            <span class="deduction-value">−{{ item.points }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>Data quality</h2>
+            <p>Missing values, repeated records, and columns that may not provide useful information.</p>
+        </div>
+        <span class="section-index">04 / QUALITY</span>
+    </div>
+
+    <div class="two-column-grid">
+        <article class="panel">
+            <div class="panel-heading">
+                <h3>Missing values by column</h3>
+                <span class="panel-tag">QUALITY CHECK</span>
+            </div>
+
+            {% if quality.missing_values %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Column</th><th>Missing values</th><th>Share</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for column, count in quality.missing_values.items() %}
+                        <tr>
+                            <td>{{ column }}</td>
+                            <td>{{ count }}</td>
+                            <td>
+                                {% set percentage = (count / quality.rows * 100) if quality.rows else 0 %}
+                                <div class="percentage-cell">
+                                    <div class="mini-progress"><span style="width: {{ percentage }}%"></span></div>
+                                    <span>{{ "%.1f" | format(percentage) }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <span class="empty-state-icon">✓</span>
+                <strong>No missing values detected</strong>
+                <p>All columns are complete according to this check.</p>
+            </div>
+            {% endif %}
+        </article>
+
+        <article class="panel">
+            <div class="panel-heading">
+                <h3>Constant columns</h3>
+                <span class="panel-tag">FEATURE CHECK</span>
+            </div>
+
+            {% if quality.constant_columns %}
+            <div class="tag-list">
+                {% for column in quality.constant_columns %}
+                <span class="data-tag">{{ column }}</span>
+                {% endfor %}
+            </div>
+            <p class="panel-footnote">These columns contain only one distinct value under the current check.</p>
+            {% else %}
+            <div class="empty-state">
+                <span class="empty-state-icon">✓</span>
+                <strong>No constant columns detected</strong>
+                <p>No columns contain just one distinct value.</p>
+            </div>
+            {% endif %}
+        </article>
+    </div>
+</section>
+
+{% if target_report %}
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>Target analysis</h2>
+            <p>Understand the variable your machine learning model may predict.</p>
+        </div>
+        <span class="section-index">05 / TARGET</span>
+    </div>
+
+    <div class="panel">
+        <div class="target-summary">
+            <div>
+                <span class="muted-label">Selected target</span>
+                <h3>{{ target_report.target }}</h3>
+            </div>
+            <span class="task-badge">{{ target_report.task_type | title }}</span>
+            <div class="target-stat">
+                <span class="muted-label">Unique values</span>
+                <strong>{{ target_report.unique_values }}</strong>
+            </div>
+            <div class="target-stat">
+                <span class="muted-label">Missing values</span>
+                <strong>{{ target_report.missing }}</strong>
+            </div>
+        </div>
+
+        {% if target_report.issues %}
+        <div class="issue-list">
+            {% for issue in target_report.issues %}
+            <div class="issue-item">
+                <span class="issue-marker">!</span>
+                <span>{{ issue }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="success-banner">No target-specific issues were flagged by the current checks.</div>
+        {% endif %}
+
+        {% if target_report.distribution %}
+        <div class="subsection-heading">
+            <h3>Class distribution</h3>
+            <span class="muted-label">Top categories</span>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Class</th><th>Records</th><th>Distribution</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in target_report.distribution %}
+                    <tr>
+                        <td>{{ item.label }}</td>
+                        <td>{{ item.count }}</td>
+                        <td>
+                            <div class="percentage-cell">
+                                <div class="mini-progress"><span style="width: {{ item.percentage }}%"></span></div>
+                                <span>{{ "%.1f" | format(item.percentage) }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if target_report.stats %}
+        <div class="target-stats-grid">
+            {% for key, value in target_report.stats.items() %}
+            <div class="target-stat-card">
+                <span>{{ key | replace("_", " ") | title }}</span>
+                <strong>{{ value }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{% if leakage_report %}
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>Potential leakage indicators</h2>
+            <p>Features that may need closer inspection before model training.</p>
+        </div>
+        <span class="section-index">06 / LEAKAGE</span>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Detection results</h3>
+            <span class="panel-tag">{{ leakage_report.tested_columns }} COLUMNS TESTED</span>
+        </div>
+
+        {% if leakage_report.findings %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Feature</th><th>Finding</th><th>Details</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in leakage_report.findings %}
+                    <tr>
+                        <td>{{ item.column }}</td>
+                        <td><span class="warning-badge">{{ item.type }}</span></td>
+                        <td>{{ item.message }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-state-icon">✓</span>
+            <strong>No potential leakage indicators flagged</strong>
+            <p>This does not guarantee the dataset is free of leakage.</p>
+        </div>
+        {% endif %}
+
+        {% if leakage_report.note %}
+        <p class="panel-footnote">{{ leakage_report.note }}</p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{% if feature_report %}
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>Feature intelligence</h2>
+            <p>Structural patterns that may affect model development.</p>
+        </div>
+        <span class="section-index">07 / FEATURES</span>
+    </div>
+
+    <div class="feature-summary-grid">
+        <div class="feature-summary-card">
+            <span class="muted-label">Rows per feature</span>
+            <strong>{{ feature_report.rows_per_feature }}</strong>
+        </div>
+        <div class="feature-summary-card">
+            <span class="muted-label">Numeric features tested</span>
+            <strong>{{ feature_report.numeric_tested }}</strong>
+        </div>
+        <div class="feature-summary-card">
+            <span class="muted-label">High-cardinality features</span>
+            <strong>{{ feature_report.high_cardinality | length }}</strong>
+        </div>
+        <div class="feature-summary-card">
+            <span class="muted-label">Potential outliers</span>
+            <strong>{{ feature_report.outliers | length }}</strong>
+        </div>
+    </div>
+
+    {% if feature_report.issues %}
+    <div class="panel feature-issues">
+        <div class="panel-heading"><h3>Observations</h3></div>
+        {% for item in feature_report.issues %}
+        <div class="issue-item">
+            <span class="issue-marker">!</span>
+            <span>{{ item.message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="two-column-grid">
+        {% for section_key, section_title in [
+            ('high_cardinality', 'High-cardinality features'),
+            ('correlated_pairs', 'Highly correlated pairs'),
+            ('skewed', 'Skewed numerical features'),
+            ('outliers', 'Potential outliers'),
+            ('mixed_types', 'Mixed-type columns'),
+            ('text_numbers', 'Numbers stored as text')
+        ] %}
+        {% set entries = feature_report[section_key] %}
+        <article class="panel">
+            <div class="panel-heading">
+                <h3>{{ section_title }}</h3>
+                <span class="count-badge">{{ entries | length }}</span>
+            </div>
+
+            {% if entries %}
+            <ul class="feature-list">
+                {% for item in entries %}
+                <li>
+                    {% if item is mapping %}
+                        <strong>{{ item.column if item.column is defined else item.feature if item.feature is defined else item.pair if item.pair is defined else item.name if item.name is defined else 'Observation' }}</strong>
+                        <span>{{ item.message if item.message is defined else item.description if item.description is defined else item }}</span>
+                    {% else %}
+                        <span>{{ item }}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="empty-inline">No items flagged in this category.</p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="content-section">
+    <div class="section-heading">
+        <div>
+            <h2>Dataset preview</h2>
+            <p>Inspect a sample of the uploaded data.</p>
+        </div>
+        <span class="section-index">08 / PREVIEW</span>
+    </div>
+
+    <div class="panel preview-panel">
+        {% if preview %}
+        <div class="table-wrapper preview-table">
+            {{ preview | safe }}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <strong>Preview unavailable</strong>
+            <p>There is no preview to display.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="download-panel">
+    <div>
+        <span class="download-kicker">READY FOR THE NEXT STEP?</span>
+        <h2>Take your dataset with you.</h2>
+        <p>Download a copy with duplicate rows removed. Other data preparation issues may still need attention.</p>
+    </div>
+
+    <form action="{{ url_for('download_cleaned') }}" method="POST" enctype="multipart/form-data" class="download-form">
+        <label for="clean-file" class="btn btn-primary download-button">
+            Choose CSV &amp; download
+        </label>
+        <input id="clean-file" type="file" name="file" accept=".csv,text/csv" required>
+        <span class="download-hint">Select the same CSV file you analyzed.</span>
+    </form>
+</section>
+
+<footer class="dashboard-footer">
+    <a class="footer-brand" href="{{ url_for('index') }}">DataLens<span>.</span></a>
+    <p>Understand your data before you train your models.</p>
+    <span class="footer-disclaimer">Readiness scores are heuristic and do not guarantee model performance.</span>
+</footer>
+```
+
+</main>
+
+<script>
+    const cleanFile = document.getElementById("clean-file");
+    const downloadForm = document.querySelector(".download-form");
+
+    if (cleanFile && downloadForm) {
+        cleanFile.addEventListener("change", function () {
+            if (this.files.length > 0) {
+                downloadForm.submit();
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

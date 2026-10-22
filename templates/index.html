@@ -429,7 +429,27 @@
     // Populate the target dropdown from the CSV header (read locally in the browser).
     const targetSelect = document.getElementById("target-select");
 
-    function parseHeader(line) {
+    // Decode like the server does: UTF-8 first, then Windows-1252 (Excel exports).
+    function decodeText(buffer) {
+        try {
+            return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+        } catch (err) {
+            return new TextDecoder("windows-1252").decode(buffer);
+        }
+    }
+
+    // Pick the most frequent separator in the header line.
+    function detectDelimiter(line) {
+        const candidates = [",", ";", "\t", "|"];
+        let best = ",", bestCount = 0;
+        candidates.forEach(function (d) {
+            const count = line.split(d).length - 1;
+            if (count > bestCount) { best = d; bestCount = count; }
+        });
+        return best;
+    }
+
+    function parseHeader(line, delim) {
         const cols = [];
         let cur = "", inQuotes = false;
         for (let i = 0; i < line.length; i++) {
@@ -437,7 +457,7 @@
             if (ch === '"') {
                 if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
                 else { inQuotes = !inQuotes; }
-            } else if (ch === "," && !inQuotes) {
+            } else if (ch === delim && !inQuotes) {
                 cols.push(cur); cur = "";
             } else {
                 cur += ch;
@@ -458,9 +478,10 @@
         }
 
         try {
-            const head = await file.slice(0, 65536).text();
+            const buffer = await file.slice(0, 65536).arrayBuffer();
+            const head = decodeText(buffer);
             const firstLine = head.replace(/^\uFEFF/, "").split(/\r?\n/)[0];
-            const columns = parseHeader(firstLine);
+            const columns = parseHeader(firstLine, detectDelimiter(firstLine));
 
             targetSelect.add(new Option("None (skip target checks)", ""));
             columns.forEach(c => targetSelect.add(new Option(c, c)));

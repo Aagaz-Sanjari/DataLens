@@ -32,9 +32,45 @@ def allowed_file(filename):
     )
 
 
+ENCODINGS = ("utf-8-sig", "cp1252", "latin-1")
+ALTERNATIVE_SEPARATORS = (";", "\t", "|")
+
+
+def parse_csv_bytes(raw):
+    """Decode and parse CSV bytes, trying common encodings and separators.
+
+    Files saved by Excel on Windows are often cp1252/latin-1 (not UTF-8), and
+    many European exports use ';' as the separator instead of ','.
+    """
+    last_error = None
+
+    for encoding in ENCODINGS:
+        try:
+            df = pd.read_csv(io.BytesIO(raw), encoding=encoding)
+
+            # A single column usually means the wrong separator was assumed.
+            if df.shape[1] == 1:
+                for separator in ALTERNATIVE_SEPARATORS:
+                    candidate = pd.read_csv(
+                        io.BytesIO(raw), encoding=encoding, sep=separator
+                    )
+                    if candidate.shape[1] > 1:
+                        return candidate
+
+            return df
+
+        except UnicodeDecodeError as exc:
+            last_error = exc
+
+    raise ValueError(
+        "The file could not be decoded. Please save it as CSV (UTF-8) "
+        f"and upload it again. ({last_error})"
+    )
+
+
 def read_csv_file(file_storage):
     """Read and validate an uploaded CSV file."""
-    df = pd.read_csv(file_storage)
+    df = parse_csv_bytes(file_storage.read())
 
     if df.empty:
         raise ValueError("The uploaded CSV contains no data rows.")
